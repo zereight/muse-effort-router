@@ -55,5 +55,33 @@ got="$("$WRAP" "리뷰해줘: 인증 우회 가능성 위주로 봐줘" --dry-ru
   && { pass=$((pass + 1)); echo "ok   [router back on]"; } \
   || { fail=$((fail + 1)); echo "FAIL [router on gave $got, want high]"; }
 
+# In-prompt control phrases toggle locally with no model call.
+out="$("$WRAP" "라우터 꺼줘")"
+[[ "$out" == "router off (default)" && "$(cat "$XDG_CONFIG_HOME/muse-effort-router/enabled")" == "off" ]] \
+  && { pass=$((pass + 1)); echo "ok   [prompt 라우터 꺼줘 -> off]"; } \
+  || { fail=$((fail + 1)); echo "FAIL [prompt off gave: $out]"; }
+
+out="$("$WRAP" "router off.")"
+[[ "$out" == "router off (default)" ]] \
+  && { pass=$((pass + 1)); echo "ok   [prompt router off. -> off]"; } \
+  || { fail=$((fail + 1)); echo "FAIL [prompt router off gave: $out]"; }
+
+out="$("$WRAP" "라우터 켜줘")"
+[[ "$out" == "router on (default)" && "$(cat "$XDG_CONFIG_HOME/muse-effort-router/enabled")" == "on" ]] \
+  && { pass=$((pass + 1)); echo "ok   [prompt 라우터 켜줘 -> on]"; } \
+  || { fail=$((fail + 1)); echo "FAIL [prompt on gave: $out]"; }
+
+out="$("$WRAP" "라우터 상태")"
+[[ "$out" == "router=on (env=unset, file=on)" ]] \
+  && { pass=$((pass + 1)); echo "ok   [prompt 라우터 상태]"; } \
+  || { fail=$((fail + 1)); echo "FAIL [prompt status gave: $out]"; }
+
+# Near-miss still routes instead of toggling.
+"$WRAP" --router on >/dev/null
+got="$("$WRAP" "라우터 꺼줘가 뭐야? 설명해줘" --dry-run | sed -E 's/^effort=([a-z]+) .*/\1/')"
+[[ "$got" == "low" ]] \
+  && { pass=$((pass + 1)); echo "ok   [near-miss routes, not toggles]"; } \
+  || { fail=$((fail + 1)); echo "FAIL [near-miss gave $got, want low]"; }
+
 printf '\n%d passed, %d failed\n' "$pass" "$fail"
 [[ "$fail" -eq 0 ]]

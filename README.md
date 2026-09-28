@@ -40,6 +40,24 @@ classification (session stickiness still applies).
 MUSE_EFFORT_ROUTER=off ./muse-effort.sh "hi"  # one-shot override
 ```
 
+Control phrases work inside the prompt too — no model call, toggles locally:
+
+```bash
+./muse-effort.sh "라우터 꺼줘"  # router off (default)
+./muse-effort.sh "라우터 켜줘"  # router on (default)
+./muse-effort.sh "라우터 상태"  # show effective state
+```
+
+Only exact phrases toggle (`라우터 꺼줘`, `router off`, `effort 고정`, …).
+Anything longer ("라우터 꺼줘가 뭐야? 설명해줘") routes normally.
+
+## Chat control (interactive sessions)
+
+`skills/effort-router/SKILL.md` teaches an interactive Muse Code session the
+same on/off/status commands. Install it with
+`muse skills install ./skills/effort-router --scope user` so "라우터 꺼줘"
+works in plain chat too.
+
 ## Tune
 
 Edit `effort-map.json`. Point elsewhere with `MUSE_EFFORT_MAP=/path/to/map.json`.

@@ -62,6 +62,20 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+# Control phrases inside the prompt itself: "라우터 꺼줘" toggles locally
+# with no model call. Anchored on purpose — "라우터 꺼줘가 뭐야?" still routes.
+toggle_intent() {
+  if printf '%s' "$PROMPT" | grep -qiE '^(라우터[[:space:]]*(꺼줘|끄기|꺼|비활성화)|router[[:space:]]+off|effort[[:space:]]+고정)[.?![:space:]]*$'; then echo off;
+  elif printf '%s' "$PROMPT" | grep -qiE '^(라우터[[:space:]]*(켜줘|켜기|켜|활성화)|router[[:space:]]+on|effort[[:space:]]+자동)[.?![:space:]]*$'; then echo on;
+  elif printf '%s' "$PROMPT" | grep -qiE '^(라우터[[:space:]]*(상태|지금[[:space:]]*상태)|router[[:space:]]+status)[.?![:space:]]*$'; then echo status;
+  fi
+}
+if [[ -z "$ROUTER_CMD" && -n "$PROMPT" ]]; then ROUTER_CMD="$(toggle_intent)"; fi
+if [[ -n "$ROUTER_CMD" && "$DRY_RUN" -eq 1 ]]; then
+  printf 'router=%s (dry-run, no change)\n' "$ROUTER_CMD"
+  exit 0
+fi
+
 if [[ -n "$ROUTER_CMD" ]]; then
   case "$ROUTER_CMD" in
     on) mkdir -p "$CONFIG_DIR"; echo on > "$ENABLED_FILE"; echo "router on (default)" ;;
