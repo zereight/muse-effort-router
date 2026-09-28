@@ -21,11 +21,23 @@ turns; a fresh id does not.
 
 ```bash
 chmod +x muse-effort.sh
-./muse-effort.sh "list open PRs" --dry-run   # effort=low session=...
+./muse-effort.sh "list open PRs" --dry-run   # effort=low session=... router=on
 ./muse-effort.sh "list open PRs"             # runs it
 ./muse-effort.sh "debug this stack trace..." # runs with higher effort
 ./muse-effort.sh "hi" --reasoning-effort low # manual override
 ./muse-effort.sh "hi" -- --workspace /path   # extra args to muse exec
+```
+
+## Router on/off
+
+On by default. When off, every prompt runs at `default_effort` with no
+classification (session stickiness still applies).
+
+```bash
+./muse-effort.sh --router off     # persist off
+./muse-effort.sh --router on      # persist on
+./muse-effort.sh --router status  # show effective state
+MUSE_EFFORT_ROUTER=off ./muse-effort.sh "hi"  # one-shot override
 ```
 
 ## Tune

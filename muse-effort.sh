@@ -7,16 +7,36 @@
 #
 # Usage:
 #   ./muse-effort.sh "your prompt" [--dry-run] [--session-id ID] [--reasoning-effort EFFORT] [-- <extra muse exec args...>]
+#   ./muse-effort.sh --router on|off|status
 #
 # Session id is sticky: stored at
 #   ${XDG_CACHE_HOME:-$HOME/.cache}/muse-effort-router/session-id
 # so repeated calls in one machine share context without passing flags.
+#
+# Router default: on. Turn it off persistently with `--router off`
+# (stored in ${XDG_CONFIG_HOME:-$HOME/.config}/muse-effort-router/enabled).
+# One-shot override: MUSE_EFFORT_ROUTER=on|off. When off, every prompt
+# runs at the map's default_effort with no classification.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MAP_FILE="${MUSE_EFFORT_MAP:-$SCRIPT_DIR/effort-map.json}"
 CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/muse-effort-router"
 SESSION_FILE="$CACHE_DIR/session-id"
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/muse-effort-router"
+ENABLED_FILE="$CONFIG_DIR/enabled"
+
+router_state() {
+  case "${MUSE_EFFORT_ROUTER:-}" in
+    on|1) echo on; return ;;
+    off|0) echo off; return ;;
+  esac
+  if [[ -f "$ENABLED_FILE" ]]; then
+    cat "$ENABLED_FILE"
+  else
+    echo on
+  fi
+}
 
 usage() {
   sed -n '2,12p' "$0"
@@ -27,6 +47,7 @@ PROMPT=""
 DRY_RUN=0
 SESSION_OVERRIDE=""
 EFFORT_OVERRIDE=""
+ROUTER_CMD=""
 EXTRA=()
 
 while [[ $# -gt 0 ]]; do
@@ -35,16 +56,35 @@ while [[ $# -gt 0 ]]; do
     --dry-run) DRY_RUN=1; shift ;;
     --session-id) SESSION_OVERRIDE="${2:-}"; shift 2 ;;
     --reasoning-effort) EFFORT_OVERRIDE="${2:-}"; shift 2 ;;
+    --router) ROUTER_CMD="${2:-}"; shift 2 ;;
     --) shift; EXTRA+=("$@"); break ;;
     *) if [[ -z "$PROMPT" ]]; then PROMPT="$1"; else PROMPT="$PROMPT $1"; fi; shift ;;
   esac
 done
 
+if [[ -n "$ROUTER_CMD" ]]; then
+  case "$ROUTER_CMD" in
+    on) mkdir -p "$CONFIG_DIR"; echo on > "$ENABLED_FILE"; echo "router on (default)" ;;
+    off) mkdir -p "$CONFIG_DIR"; echo off > "$ENABLED_FILE"; echo "router off (default)" ;;
+    status)
+      file_state="unset"; [[ -f "$ENABLED_FILE" ]] && file_state="$(cat "$ENABLED_FILE")"
+      printf 'router=%s (env=%s, file=%s)\n' "$(router_state)" "${MUSE_EFFORT_ROUTER:-unset}" "$file_state" ;;
+    *) echo "error: --router needs on|off|status" >&2; exit 1 ;;
+  esac
+  exit 0
+fi
+
 [[ -z "$PROMPT" ]] && { echo "error: prompt required" >&2; usage 1; }
 command -v python3 >/dev/null || { echo "error: python3 required" >&2; exit 1; }
 [[ -f "$MAP_FILE" ]] || { echo "error: map file not found: $MAP_FILE" >&2; exit 1; }
 
-EFFORT="$(python3 - "$MAP_FILE" "$PROMPT" <<'PY'
+ROUTER="$(router_state)"
+DEFAULT_EFFORT="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8")).get("default_effort", "medium"))' "$MAP_FILE")"
+
+if [[ "$ROUTER" == "off" ]]; then
+  EFFORT="$DEFAULT_EFFORT"
+else
+  EFFORT="$(python3 - "$MAP_FILE" "$PROMPT" <<'PY'
 import json, re, sys
 map_file, prompt = sys.argv[1], sys.argv[2]
 with open(map_file, encoding="utf-8") as f:
@@ -87,6 +127,7 @@ else:
     print(cfg.get("default_effort", "medium"))
 PY
 )"
+fi
 
 if [[ -n "$EFFORT_OVERRIDE" ]]; then EFFORT="$EFFORT_OVERRIDE"; fi
 
@@ -107,7 +148,7 @@ else
 fi
 
 if [[ "$DRY_RUN" -eq 1 ]]; then
-  printf 'effort=%s session=%s\n' "$EFFORT" "$SESSION_ID"
+  printf 'effort=%s session=%s router=%s\n' "$EFFORT" "$SESSION_ID" "$ROUTER"
   exit 0
 fi
 
