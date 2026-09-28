@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "name": "muse-effort-router",
+  "version": "0.2.0",
+  "description": "Per-prompt effort router toggle: /muse-auto-effort-on, /muse-auto-effort-off, /muse-auto-effort-status.",
+  "compat": {
+    "source": "native",
+    "manifestDir": ".muse-plugin"
+  },
+  "capabilities": {
+    "skills": [],
+    "commands": [
+      {"id": "muse-auto-effort-on", "path": "commands/muse-auto-effort-on.md"},
+      {"id": "muse-auto-effort-off", "path": "commands/muse-auto-effort-off.md"},
+      {"id": "muse-auto-effort-status", "path": "commands/muse-auto-effort-status.md"}
+    ],
+    "hooks": [],
+    "mcpServers": [],
+    "reminders": []
+  }
+}

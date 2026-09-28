@@ -63,10 +63,25 @@ works in plain chat too.
 Edit `effort-map.json`. Point elsewhere with `MUSE_EFFORT_MAP=/path/to/map.json`.
 Reset the sticky session with `rm ~/.cache/muse-effort-router/session-id`.
 
+## Slash commands (input box)
+
+Install the plugin once:
+
+```bash
+muse plugins install ./plugin --scope user
+```
+
+Then in any Muse Code input box:
+
+- `/muse-auto-effort-off` — router off
+- `/muse-auto-effort-on` — router on
+- `/muse-auto-effort-status` — show state
+
 ## Test
 
 ```bash
-./tests/test-map.sh
+./tests/test-map.sh     # prompt -> effort map + toggle, no API calls
+./tests/test-plugin.sh  # plugin manifest + muse plugins validate
 ```
 
 ## License
