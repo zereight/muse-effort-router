@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "default_effort": "medium",
+  "rules": [
+    {
+      "effort": "minimal",
+      "match": "/^(hi|hello|hey|thanks|thank you|ok|okay|ㅇㅇ|ㅇㅋ|응|어|넵|확인|고마워)[.!\\s]*$/i",
+      "why": "greetings and acks only"
+    },
+    {
+      "effort": "low",
+      "match": "len<=140 and /(what|how|where|when|설명|알려줘|뭐야|확인해줘|요약|list|show|help)/i",
+      "why": "short factual questions, summaries, lookups"
+    },
+    {
+      "effort": "max",
+      "match": "len>1200 or /(architecture|아키텍처|migration|마이그레이션|security|보안|race condition|concurrency|성능 최적화|incident|장애 대응)/i",
+      "why": "long prompts or high-stakes work (checked before high)"
+    },
+    {
+      "effort": "high",
+      "match": "/(debug|디버그|에러|오류|traceback|stack trace|fix|고쳐|수정해줘|review|리뷰|refactor|리팩터|design|설계)/i",
+      "why": "debugging, review, refactor, design"
+    }
+  ],
+  "notes": "First matching rule wins, top to bottom. Tune thresholds and keywords for your own workload."
+}
